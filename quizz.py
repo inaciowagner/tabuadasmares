@@ -20,7 +20,7 @@ st.markdown("""
 <style>
     /* CORREÇÃO: Força o fundo do app e do container principal para cores claras */
     .stApp {
-        background-color: #f0f2f6; 
+        background-color: #000000; 
     }
     .main {
         background-color: #ffffff; 
