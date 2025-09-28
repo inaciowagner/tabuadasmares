@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import random # Importado para embaralhar as questões
-import math # Importado para cálculo de distância Euclidiana
+import random 
+import math 
 
 # --- Configuração da Página e Estilos ---
 
@@ -18,6 +18,14 @@ st.set_page_config(
 # Estilo CSS personalizado
 st.markdown("""
 <style>
+    /* CORREÇÃO: Força o fundo do app e do container principal para cores claras */
+    .stApp {
+        background-color: #f0f2f6; 
+    }
+    .main {
+        background-color: #ffffff; 
+    }
+    
     .main-header {
         font-size: 3rem;
         color: #1f77b4;
@@ -67,9 +75,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sistema de Perguntas e Pontuação ---
+# --- Sistema de Perguntas e Pontuação (Mantido Coerente) ---
 
-# Lista Original de Perguntas (usada para reinicializar)
 QUESTIONS_LIST = [
     {
         "id": 1,
@@ -161,9 +168,7 @@ QUESTIONS_LIST = [
     }
 ]
 
-# Sistema de classificação (pontos médios para Distância Euclidiana)
 IDEOLOGY_POINTS = {
-    # Coordenadas (Eixo Econômico, Eixo Social)
     "Comunista": (-2.0, -1.0),
     "Socialista": (-1.5, -0.5),
     "Social Democrata": (-0.5, 0.0),
@@ -176,14 +181,12 @@ IDEOLOGY_POINTS = {
     "Fascista/Nacionalista": (1.5, 2.0)
 }
 
-# --- Funções de Lógica de Negócio ---
+# --- Funções de Lógica de Negócio (Mantido Coerente) ---
 
 def calculate_results(answers):
     """Calcula os resultados baseado nas respostas com normalização correta."""
     economy_score = 0
     social_score = 0
-    
-    # 8 questões no total, 4 para cada eixo. Max Score por eixo = 4 * 2 = 8.
     MAX_SCORE_PER_AXIS = 8.0 
 
     for answer in answers.values():
@@ -193,13 +196,6 @@ def calculate_results(answers):
             social_score += answer["valor"]
     
     # Normalização dos scores para a escala -2.0 a +2.0
-    # Fórmula: (score_atual / max_score_possivel) * 2
-    
-    # Exemplo: Se todas as 4 perguntas de economia deram -2, o score_atual é -8.
-    # Normalizado: (-8 / 8) * 2 = -2.0 (Correto)
-    # Exemplo: Se o score_atual é 0: (0 / 8) * 2 = 0.0 (Correto)
-    # Exemplo: Se o score_atual é 4: (4 / 8) * 2 = 1.0 (Correto)
-
     economy_normalized = (economy_score / MAX_SCORE_PER_AXIS) * 2.0
     social_normalized = (social_score / MAX_SCORE_PER_AXIS) * 2.0
 
@@ -210,13 +206,11 @@ def determine_ideology(economy, social):
     best_match = "Centrista"
     min_distance = float('inf')
 
-    # Ponto do usuário
     user_point = (economy, social)
 
     for ideology, point in IDEOLOGY_POINTS.items():
         ideology_point = point
         
-        # Distância Euclidiana: d = sqrt((x2 - x1)² + (y2 - y1)²)
         distance = math.sqrt(
             (user_point[0] - ideology_point[0])**2 + 
             (user_point[1] - ideology_point[1])**2
@@ -241,12 +235,167 @@ def plot_results(economy, social, ideology):
     """Cria gráfico dos resultados"""
     fig, ax = plt.subplots(figsize=(10, 8))
 
-    # Define o grid do gráfico
     ax.set_xlim(-2.2, 2.2)
     ax.set_ylim(-2.2, 2.2)
 
-    # Cores dos Quadrantes (Autoritário/Libertário x Esquerda/Direita)
-    ax.fill_between([-2.2, 0], 0, 2.2, alpha=0.15, color='red')    # Autoritário-Esquerda
-    ax.fill_between([-2.2, 0], -2.2, 0, alpha=0.15, color='orange') # Libertário-Esquerda
-    ax.fill_between([0, 2.2], 0, 2.2, alpha=0.15, color='purple')  # Autoritário-Direita
-    ax.fill_between([0, 2.2], -2.2, 0, alpha=0.15, color='green')  # Libertário-Direita
+    # Cores dos Quadrantes
+    ax.fill_between([-2.2, 0], 0, 2.2, alpha=0.15, color='red')
+    ax.fill_between([-2.2, 0], -2.2, 0, alpha=0.15, color='orange')
+    ax.fill_between([0, 2.2], 0, 2.2, alpha=0.15, color='purple')
+    ax.fill_between([0, 2.2], -2.2, 0, alpha=0.15, color='green')
+
+    # Plotar pontos de referência das ideologias
+    for name, point in IDEOLOGY_POINTS.items():
+        ax.scatter(point[0], point[1], marker='x', color='gray', s=50, alpha=0.7)
+        if name in ["Centrista", "Comunista", "Fascista/Nacionalista", "Anarcocapitalista"]:
+            ax.annotate(name, (point[0], point[1]), 
+                        xytext=(5, 5), textcoords='offset points', 
+                        fontsize=8, color='gray')
+
+    # Linhas centrais
+    ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+    ax.axvline(x=0, color='black', linestyle='-', alpha=0.5)
+
+    # Ponto do usuário
+    ax.scatter(economy, social, color='gold', s=250, edgecolors='black', linewidth=1.5, zorder=5)
+    ax.annotate(f'Você: {ideology}', (economy, social), 
+                xytext=(10, 10), textcoords='offset points', 
+                bbox=dict(boxstyle='round,pad=0.4', facecolor='yellow', alpha=0.9, edgecolor='black'),
+                fontsize=10)
+
+    ax.set_xlabel('Eixo Econômico\n← Coletivista/Esquerda (-2.0) - Individualista/Direita (+2.0) →', fontsize=12)
+    ax.set_ylabel('Eixo Social\n← Libertário (-2.0) - Autoritário (+2.0) →', fontsize=12)
+    ax.set_title('Seu Posicionamento Político no Espectro', fontsize=14, fontweight='bold')
+    ax.grid(True, linestyle='--', alpha=0.4)
+
+    return fig
+
+# --- Aplicação Streamlit Principal ---
+
+def main():
+    st.markdown('<h1 class="main-header">🏛️ Quiz Político</h1>', unsafe_allow_html=True)
+    st.markdown("### Descubra seu espectro político e inclinação ideológica")
+
+    if 'answers' not in st.session_state:
+        st.session_state.answers = {}
+    if 'current_question' not in st.session_state:
+        st.session_state.current_question = 0
+    if 'quiz_complete' not in st.session_state:
+        st.session_state.quiz_complete = False
+        
+    if 'shuffled_questions' not in st.session_state:
+        st.session_state.shuffled_questions = QUESTIONS_LIST.copy()
+        random.shuffle(st.session_state.shuffled_questions)
+
+    questions = st.session_state.shuffled_questions
+    total_questions = len(questions)
+
+    progress_value = (st.session_state.current_question) / total_questions
+    st.progress(progress_value)
+    st.write(f"Pergunta {st.session_state.current_question + 1} de {total_questions}")
+
+    if not st.session_state.quiz_complete:
+        current_q = questions[st.session_state.current_question]
+
+        st.subheader(f"Pergunta {st.session_state.current_question + 1}: {current_q['question']}")
+
+        option_keys = list(current_q['options'].keys())
+        random.shuffle(option_keys)
+        
+        radio_key = f"question_{current_q['id']}_{st.session_state.current_question}"
+
+        default_option = None
+        if current_q['id'] in st.session_state.answers:
+            for key, value in current_q['options'].items():
+                if value == st.session_state.answers[current_q['id']]:
+                    default_option = key
+                    break
+
+        selected_option = st.radio(
+            "Selecione sua resposta:",
+            options=option_keys,
+            index=option_keys.index(default_option) if default_option else 0,
+            key=radio_key
+        )
+
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            if st.session_state.current_question > 0:
+                if st.button("← Voltar"):
+                    st.session_state.answers[current_q['id']] = current_q['options'][selected_option]
+                    st.session_state.current_question -= 1
+                    st.rerun()
+
+        with col2:
+            if st.button("Próxima →" if st.session_state.current_question < total_questions - 1 else "Finalizar Quiz"):
+                st.session_state.answers[current_q['id']] = current_q['options'][selected_option]
+
+                if st.session_state.current_question < total_questions - 1:
+                    st.session_state.current_question += 1
+                else:
+                    st.session_state.quiz_complete = True
+                st.rerun()
+
+    else:
+        # --- Mostrar Resultados ---
+        st.balloons()
+        st.success("🎉 Quiz Concluído! Aqui estão seus resultados:")
+
+        economy_score, social_score = calculate_results(st.session_state.answers)
+        ideology = determine_ideology(economy_score, social_score)
+        spectrum = determine_spectrum(economy_score)
+
+        spectrum_class = ""
+        if spectrum == "Esquerda":
+            spectrum_class = "left-wing"
+        elif spectrum == "Centro":
+            spectrum_class = "center-wing"
+        else:
+            spectrum_class = "right-wing"
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown(f"""
+            <div class="result-card {spectrum_class}">
+                <h2>📊 Seu Resultado</h2>
+                <h3>Espectro: <strong>{spectrum}</strong></h3>
+                <h3>Inclinação: <strong>{ideology}</strong></h3>
+                <p><strong>Eixo Econômico (X):</strong> {economy_score:.2f} (← Coletivista | Individualista →)</p>
+                <p><strong>Eixo Social (Y):</strong> {social_score:.2f} (← Libertário | Autoritário →)</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            fig = plot_results(economy_score, social_score, ideology)
+            st.pyplot(fig)
+
+        # Descrição detalhada
+        st.subheader("📖 Explicação do Resultado")
+
+        ideology_descriptions = {
+            "Comunista": "Busca uma sociedade sem classes e a abolição da propriedade privada e do Estado, com forte controle coletivo da economia.",
+            "Socialista": "Defende a socialização dos meios de produção e uma economia planificada com forte Estado de bem-estar social e progressismo social.",
+            "Social Democrata": "Combina democracia política com economia mista, Estado de bem-estar social e uma abordagem equilibrada de políticas sociais.",
+            "Anarco-Comunista": "Oposição a todas as formas de governo e defesa de uma sociedade sem classes, sem Estado e com autogestão dos meios de produção.",
+            "Centrista": "Posição moderada que busca equilíbrio entre diferentes correntes, priorizando o pragmatismo e o consenso.",
+            "Social Liberal": "Defende liberdades individuais e de mercado, mas com intervenção estatal para garantir justiça social e direitos civis amplos.",
+            "Liberal": "Ênfase na liberdade individual, economia de mercado (livre mercado) e Estado mínimo (Mínimo Socialmente Necessário).",
+            "Conservador": "Valoriza a tradição, ordem social hierárquica e manutenção das instituições, geralmente com foco na livre iniciativa econômica.",
+            "Anarcocapitalista": "Defende a abolição do Estado e o controle total da sociedade pelo mercado e contratos privados, incluindo serviços de segurança.",
+            "Fascista/Nacionalista": "Defende um Estado totalitário, nacionalismo extremo, corporativismo econômico e forte repressão à oposição e à diferença."
+        }
+
+        st.write(f"Sua **Inclinação Principal** é: **{ideology}**")
+        st.write(f"**{ideology}**: {ideology_descriptions.get(ideology, 'Descrição não disponível.')}")
+
+        if st.button("🔄 Refazer Quiz"):
+            st.session_state.answers = {}
+            st.session_state.current_question = 0
+            st.session_state.quiz_complete = False
+            del st.session_state.shuffled_questions 
+            st.rerun()
+
+if __name__ == "__main__":
+    main()
