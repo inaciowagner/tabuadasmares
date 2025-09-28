@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random # Importação adicionada para embaralhar as questões
+
+# --- Configuração da Página e Estilos ---
 
 # Configuração da página
 st.set_page_config(
@@ -64,8 +67,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Sistema de perguntas e pontuação
-questions = [
+# --- Sistema de Perguntas e Pontuação ---
+
+# A lista original de perguntas é mantida aqui, mas será embaralhada na função main()
+QUESTIONS_LIST = [
     {
         "id": 1,
         "question": "Qual é a sua visão sobre o papel do Estado na economia?",
@@ -156,7 +161,7 @@ questions = [
     }
 ]
 
-# Sistema de classificação
+# Sistema de classificação (mantido o original)
 ideologies = {
     "Socialista": {"economia": [-2, -1], "social": [-2, 0]},
     "Comunista": {"economia": [-2, -2], "social": [-2, -1]},
@@ -169,43 +174,74 @@ ideologies = {
     "Fascista": {"economia": [0, 2], "social": [2, 2]}
 }
 
+# --- Funções de Lógica de Negócio ---
+
 def calculate_results(answers):
     """Calcula os resultados baseado nas respostas"""
     economy_score = 0
     social_score = 0
     total_questions = len(answers)
+
+    # Verifica se há respostas para evitar divisão por zero, embora neste caso
+    # só será chamada quando o quiz estiver completo.
+    if total_questions == 0:
+        return 0, 0
     
+    # O número de questões por eixo é o total de questões dividido por 2 (4 para cada eixo)
+    num_questions_per_axis = total_questions / 2
+
     for answer in answers.values():
         if answer["eixo"] == "economia":
             economy_score += answer["valor"]
         else:
             social_score += answer["valor"]
-    
+
     # Normalizar scores para escala -2 a 2
-    economy_normalized = (economy_score / (total_questions/2)) / 2
-    social_normalized = (social_score / (total_questions/2)) / 2
-    
+    # Divide pelo número de questões por eixo para ter uma média de valor
+    economy_normalized = economy_score / num_questions_per_axis
+    social_normalized = social_score / num_questions_per_axis
+
     return economy_normalized, social_normalized
 
 def determine_ideology(economy, social):
     """Determina a ideologia baseado nos scores"""
     best_match = "Centrista"
     best_score = float('inf')
-    
+
     for ideology, ranges in ideologies.items():
         economy_range = ranges["economia"]
         social_range = ranges["social"]
+
+        # Calcula a distância do ponto (economy, social) para o centro do range ideal
+        # Para simplificar, vamos usar a distância do ponto para o ponto médio do range
+        # e a distância Manhattan (soma das distâncias absolutas nos eixos)
         
-        # Calcula distância dos ranges ideais
-        economy_dist = min(abs(economy - economy_range[0]), abs(economy - economy_range[1]))
-        social_dist = min(abs(social - social_range[0]), abs(social - social_range[1]))
+        # Ponto médio do range econômico
+        eco_mid = (economy_range[0] + economy_range[1]) / 2
+        # Ponto médio do range social
+        social_mid = (social_range[0] + social_range[1]) / 2
         
-        total_dist = economy_dist + social_dist
-        
+        # Distância do ponto do usuário ao ponto médio da ideologia
+        eco_dist = abs(economy - eco_mid)
+        social_dist = abs(social - social_mid)
+
+        total_dist = eco_dist + social_dist
+
+        # Critério de seleção: se a distância total for menor OU (se for igual, prefere o que está mais próximo do centro social)
         if total_dist < best_score:
             best_score = total_dist
             best_match = ideology
-    
+        # Desempate simples, pode ser refinado
+        elif total_dist == best_score:
+            # Preferir o que está mais próximo da média da escala (0)
+            current_mid_dist = abs(eco_mid) + abs(social_mid)
+            best_mid_dist = abs((ideologies[best_match]["economia"][0] + ideologies[best_match]["economia"][1]) / 2) + \
+                            abs((ideologies[best_match]["social"][0] + ideologies[best_match]["social"][1]) / 2)
+            
+            if current_mid_dist < best_mid_dist:
+                 best_match = ideology
+
+
     return best_match
 
 def determine_spectrum(economy_score):
@@ -220,39 +256,49 @@ def determine_spectrum(economy_score):
 def plot_results(economy, social, ideology):
     """Cria gráfico dos resultados"""
     fig, ax = plt.subplots(figsize=(10, 8))
-    
+
     # Define o grid do gráfico
-    ax.set_xlim(-2.5, 2.5)
-    ax.set_ylim(-2.5, 2.5)
+    # Os eixos do quiz são de -2 a 2, mas plotamos um pouco mais para margem
+    ax.set_xlim(-2.2, 2.2)
+    ax.set_ylim(-2.2, 2.2)
+
+    # Áreas coloridas (Quadrantes)
+    # Esquerda (Economia < 0), Direita (Economia > 0)
+    # Libertário (Social < 0), Autoritário (Social > 0)
     
-    # Áreas coloridas
-    ax.fill_between([-2.5, 0], -2.5, 2.5, alpha=0.2, color='red', label='Esquerda Econômica')
-    ax.fill_between([0, 2.5], -2.5, 2.5, alpha=0.2, color='blue', label='Direita Econômica')
-    ax.fill_between([-2.5, 2.5], 0, 2.5, alpha=0.2, color='purple', label='Autoritário')
-    ax.fill_between([-2.5, 2.5], -2.5, 0, alpha=0.2, color='green', label='Libertário')
-    
+    # Quadrante Superior Esquerdo (Autoritário-Esquerda)
+    ax.fill_between([-2.2, 0], 0, 2.2, alpha=0.15, color='red')
+    # Quadrante Inferior Esquerdo (Libertário-Esquerda)
+    ax.fill_between([-2.2, 0], -2.2, 0, alpha=0.15, color='orange')
+    # Quadrante Superior Direito (Autoritário-Direita)
+    ax.fill_between([0, 2.2], 0, 2.2, alpha=0.15, color='purple')
+    # Quadrante Inferior Direito (Libertário-Direita)
+    ax.fill_between([0, 2.2], -2.2, 0, alpha=0.15, color='green')
+
+
     # Linhas centrais
-    ax.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-    ax.axvline(x=0, color='black', linestyle='-', alpha=0.3)
-    
+    ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+    ax.axvline(x=0, color='black', linestyle='-', alpha=0.5)
+
     # Ponto do usuário
-    ax.scatter(economy, social, color='gold', s=200, edgecolors='black', zorder=5)
+    ax.scatter(economy, social, color='gold', s=250, edgecolors='black', linewidth=1.5, zorder=5)
     ax.annotate(f'Você: {ideology}', (economy, social), 
                 xytext=(10, 10), textcoords='offset points', 
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
-    
-    ax.set_xlabel('Eixo Econômico\n← Esquerda (Coletivista) - Direita (Individualista) →')
-    ax.set_ylabel('Eixo Social\n← Libertário - Autoritário →')
-    ax.set_title('Seu Posicionamento Político')
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    
+                bbox=dict(boxstyle='round,pad=0.4', facecolor='yellow', alpha=0.8, edgecolor='black'))
+
+    ax.set_xlabel('Eixo Econômico\n← Coletivista/Esquerda - Individualista/Direita →', fontsize=12)
+    ax.set_ylabel('Eixo Social\n← Libertário - Autoritário →', fontsize=12)
+    ax.set_title('Seu Posicionamento Político', fontsize=14, fontweight='bold')
+    ax.grid(True, linestyle='--', alpha=0.4)
+
     return fig
+
+# --- Aplicação Streamlit Principal ---
 
 def main():
     st.markdown('<h1 class="main-header">🏛️ Quiz Político</h1>', unsafe_allow_html=True)
     st.markdown("### Descubra seu espectro político e inclinação ideológica")
-    
+
     # Inicializar session state
     if 'answers' not in st.session_state:
         st.session_state.answers = {}
@@ -260,54 +306,74 @@ def main():
         st.session_state.current_question = 0
     if 'quiz_complete' not in st.session_state:
         st.session_state.quiz_complete = False
-    
+    # Inicializar a lista de questões embaralhadas
+    if 'shuffled_questions' not in st.session_state or st.session_state.quiz_complete:
+        st.session_state.shuffled_questions = QUESTIONS_LIST.copy()
+        # Embaralha as questões usando random.shuffle()
+        random.shuffle(st.session_state.shuffled_questions)
+
+
+    questions = st.session_state.shuffled_questions
+    total_questions = len(questions)
+
     # Mostrar progresso
-    progress = st.session_state.current_question / len(questions)
-    st.progress(progress)
-    st.write(f"Pergunta {st.session_state.current_question + 1} de {len(questions)}")
-    
+    progress_value = (st.session_state.current_question) / total_questions
+    st.progress(progress_value)
+    st.write(f"Pergunta {st.session_state.current_question + 1} de {total_questions}")
+
     if not st.session_state.quiz_complete:
         # Mostrar pergunta atual
+        # Pega a pergunta da lista embaralhada
         current_q = questions[st.session_state.current_question]
+
+        st.subheader(f"Pergunta {st.session_state.current_question + 1}: {current_q['question']}")
+
+        # Opções de resposta (Usa o ID original da questão para chavear a resposta)
         
-        st.subheader(f"Pergunta {current_q['id']}: {current_q['question']}")
+        # Embaralha as opções para evitar a tendência de escolha
+        option_keys = list(current_q['options'].keys())
+        random.shuffle(option_keys)
         
-        # Opções de resposta
+        # Define a chave de radio com o ID da pergunta e o índice atual para garantir unicidade na rerodagem
+        radio_key = f"question_{current_q['id']}_{st.session_state.current_question}"
+
         selected_option = st.radio(
             "Selecione sua resposta:",
-            options=list(current_q['options'].keys()),
-            key=f"question_{current_q['id']}"
+            options=option_keys, # Usa as opções embaralhadas
+            key=radio_key
         )
-        
+
         col1, col2 = st.columns([1, 1])
-        
+
         with col1:
             if st.session_state.current_question > 0:
+                # Botão de voltar
                 if st.button("← Voltar"):
                     st.session_state.current_question -= 1
                     st.rerun()
-        
+
         with col2:
-            if st.button("Próxima →" if st.session_state.current_question < len(questions) - 1 else "Finalizar Quiz"):
-                # Salvar resposta
+            # Salva a resposta antes de avançar
+            if st.button("Próxima →" if st.session_state.current_question < total_questions - 1 else "Finalizar Quiz"):
+                # Salvar resposta usando o ID original da pergunta como chave para rastreamento
                 st.session_state.answers[current_q['id']] = current_q['options'][selected_option]
-                
-                if st.session_state.current_question < len(questions) - 1:
+
+                if st.session_state.current_question < total_questions - 1:
                     st.session_state.current_question += 1
                 else:
                     st.session_state.quiz_complete = True
                 st.rerun()
-    
+
     else:
-        # Mostrar resultados
+        # --- Mostrar Resultados ---
         st.balloons()
         st.success("🎉 Quiz Concluído! Aqui estão seus resultados:")
-        
+
         # Calcular resultados
         economy_score, social_score = calculate_results(st.session_state.answers)
         ideology = determine_ideology(economy_score, social_score)
         spectrum = determine_spectrum(economy_score)
-        
+
         # Determinar classe CSS baseada no espectro
         spectrum_class = ""
         if spectrum == "Esquerda":
@@ -316,29 +382,29 @@ def main():
             spectrum_class = "center-wing"
         else:
             spectrum_class = "right-wing"
-        
+
         # Mostrar resultados principais
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown(f"""
             <div class="result-card {spectrum_class}">
                 <h2>📊 Seu Resultado</h2>
-                <h3>Espectro: {spectrum}</h3>
-                <h3>Inclinação: {ideology}</h3>
-                <p><strong>Eixo Econômico:</strong> {economy_score:.2f}</p>
-                <p><strong>Eixo Social:</strong> {social_score:.2f}</p>
+                <h3>Espectro: <strong>{spectrum}</strong></h3>
+                <h3>Inclinação: <strong>{ideology}</strong></h3>
+                <p><strong>Eixo Econômico:</strong> {economy_score:.2f} (Intervalo: -2 a +2)</p>
+                <p><strong>Eixo Social:</strong> {social_score:.2f} (Intervalo: -2 a +2)</p>
             </div>
             """, unsafe_allow_html=True)
-        
+
         with col2:
             # Gráfico
             fig = plot_results(economy_score, social_score, ideology)
             st.pyplot(fig)
-        
+
         # Descrição detalhada
         st.subheader("📖 Explicação do Resultado")
-        
+
         ideology_descriptions = {
             "Socialista": "Defende a socialização dos meios de produção e uma economia planificada com forte Estado de bem-estar social.",
             "Comunista": "Busca uma sociedade sem classes através da abolição da propriedade privada e do Estado, com economia totalmente coletivizada.",
@@ -350,14 +416,20 @@ def main():
             "Conservador": "Valoriza tradição, ordem social hierárquica e manutenção das instituições estabelecidas.",
             "Fascista": "Defende Estado totalitário, nacionalismo extremo e supressão da oposição política."
         }
-        
+
         st.write(f"**{ideology}**: {ideology_descriptions.get(ideology, 'Descrição não disponível.')}")
-        
+        st.markdown(f"Seu resultado: **{ideology}** é o mais próximo do seu ponto no espectro político de acordo com as respostas.")
+
+
         # Botão para refazer
         if st.button("🔄 Refazer Quiz"):
+            # Reseta todos os estados, inclusive a lista de perguntas embaralhadas (que será gerada novamente)
             st.session_state.answers = {}
             st.session_state.current_question = 0
             st.session_state.quiz_complete = False
+            # Remove a lista antiga para que uma nova seja embaralhada ao rerodarmos
+            if 'shuffled_questions' in st.session_state:
+                del st.session_state.shuffled_questions 
             st.rerun()
 
 if __name__ == "__main__":
