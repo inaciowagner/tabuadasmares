@@ -25,20 +25,44 @@ st.markdown("""
         border-radius: 10px;
         margin: 1rem 0;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        color: #333333;  /* Texto escuro para melhor contraste */
+    }
+    .result-card h2, .result-card h3, .result-card p {
+        color: #333333;  /* Garante que todos os textos fiquem escuros */
+    }
+    .result-card strong {
+        color: #000000;  /* Texto mais escuro para elementos strong */
     }
     .left-wing {
         background-color: #ffebee;
         border-left: 5px solid #f44336;
+        color: #333333;
     }
     .center-wing {
         background-color: #f3e5f5;
         border-left: 5px solid #9c27b0;
+        color: #333333;
     }
     .right-wing {
         background-color: #e8f5e8;
         border-left: 5px solid #4caf50;
+        color: #333333;
+    }
+    /* Estilo específico para textos dentro dos cards */
+    .result-card h2 {
+        color: #1a1a1a !important;
+        margin-bottom: 1rem;
+    }
+    .result-card h3 {
+        color: #2d2d2d !important;
+        margin-bottom: 0.5rem;
+    }
+    .result-card p {
+        color: #333333 !important;
+        margin-bottom: 0.25rem;
     }
 </style>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
 
 # Sistema de perguntas e pontuação
