@@ -16,386 +16,183 @@ st.set_page_config(
 )
 
 # Estilo CSS personalizado
-st.markdown("""
-<style>
-    /* CORREÇÃO: Força o fundo do app e do container principal para cores claras */
-    .stApp {
-        background-color: #000000; 
-    }
-    .main {
-        background-color: #ffffff; 
-    }
-    
-    .main-header {
-        font-size: 3rem;
-        color: #1f77b4;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .result-card {
-        padding: 2rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        color: #333333;
-    }
-    .result-card h2, .result-card h3, .result-card p {
-        color: #333333;
-    }
-    .result-card strong {
-        color: #000000;
-    }
-    .left-wing {
-        background-color: #ffebee;
-        border-left: 5px solid #f44336;
-        color: #333333;
-    }
-    .center-wing {
-        background-color: #f3e5f5;
-        border-left: 5px solid #9c27b0;
-        color: #333333;
-    }
-    .right-wing {
-        background-color: #e8f5e8;
-        border-left: 5px solid #4caf50;
-        color: #333333;
-    }
-    .result-card h2 {
-        color: #1a1a1a !important;
-        margin-bottom: 1rem;
-    }
-    .result-card h3 {
-        color: #2d2d2d !important;
-        margin-bottom: 0.5rem;
-    }
-    .result-card p {
-        color: #333333 !important;
-        margin-bottom: 0.25rem;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# --- Sistema de Perguntas e Pontuação (Mantido Coerente) ---
-
-QUESTIONS_LIST = [
-    {
-        "id": 1,
-        "question": "Qual é a sua visão sobre o papel do Estado na economia?",
-        "options": {
-            "O Estado deve controlar os meios de produção": {"eixo": "economia", "valor": -2},
-            "O Estado deve regular fortemente a economia": {"eixo": "economia", "valor": -1},
-            "Estado e mercado devem coexistir com regulamentação moderada": {"eixo": "economia", "valor": 0},
-            "O Estado deve intervir minimamente na economia": {"eixo": "economia", "valor": 1},
-            "O mercado deve ser completamente livre": {"eixo": "economia", "valor": 2}
+st.markdown(""" 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Códigos de Barras</title>
+    <!-- Carrega o Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuração do Tailwind para usar a fonte Inter e cores personalizadas -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#4f46e5',
+                        'primary-dark': '#4338ca',
+                        'secondary': '#f97316',
+                    }
+                }
+            }
         }
-    },
-    {
-        "id": 2,
-        "question": "Como você vê as políticas sociais e direitos civis?",
-        "options": {
-            "Devemos promover mudanças radicais e quebrar estruturas tradicionais": {"eixo": "social", "valor": -2},
-            "Devemos avançar rapidamente em direção a maior igualdade social": {"eixo": "social", "valor": -1},
-            "Devemos buscar equilíbrio entre progresso e tradição": {"eixo": "social", "valor": 0},
-            "Devemos preservar valores e estruturas tradicionais": {"eixo": "social", "valor": 1},
-            "Devemos retornar a valores tradicionais e hierarquias naturais": {"eixo": "social", "valor": 2}
+    </script>
+    <style>
+        /* Estilos personalizados para o código de barras (opcional, mas adiciona um toque visual) */
+        .barcode-img {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e5e7eb;
+            transition: transform 0.3s ease;
         }
-    },
-    {
-        "id": 3,
-        "question": "Qual é sua posição sobre propriedade privada?",
-        "options": {
-            "A propriedade privada deve ser abolida": {"eixo": "economia", "valor": -2},
-            "Propriedade coletiva deve predominar sobre a privada": {"eixo": "economia", "valor": -1},
-            "Devem coexistir propriedade pública e privada": {"eixo": "economia", "valor": 0},
-            "Propriedade privada com algumas limitações sociais": {"eixo": "economia", "valor": 1},
-            "Propriedade privada deve ser absoluta e irrestrita": {"eixo": "economia", "valor": 2}
+        .barcode-img:hover {
+            transform: scale(1.02);
         }
-    },
-    {
-        "id": 4,
-        "question": "Como você vê a organização do poder político?",
-        "options": {
-            "Devemos abolir completamente o Estado": {"eixo": "social", "valor": -2},
-            "Poder deve ser radicalmente descentralizado e comunitário": {"eixo": "social", "valor": -1},
-            "Devemos equilibrar democracia representativa com participativa": {"eixo": "social", "valor": 0},
-            "Estado forte com democracia representativa": {"eixo": "social", "valor": 1},
-            "Estado muito forte com liderança autoritária": {"eixo": "social", "valor": 2}
-        }
-    },
-    {
-        "id": 5,
-        "question": "Qual é sua visão sobre justiça social e desigualdade?",
-        "options": {
-            "Devemos eliminar completamente as classes sociais": {"eixo": "economia", "valor": -2},
-            "Redistribuição radical de riqueza através de impostos progressivos": {"eixo": "economia", "valor": -1},
-            "Políticas sociais moderadas para reduzir desigualdades": {"eixo": "economia", "valor": 0},
-            "Oportunidades iguais, mas aceitação de desigualdades naturais": {"eixo": "economia", "valor": 1},
-            "Desigualdade é natural e necessária para o progresso": {"eixo": "economia", "valor": 2}
-        }
-    },
-    {
-        "id": 6,
-        "question": "Como você vê questões de identidade nacional e imigração?",
-        "options": {
-            "Abolir fronteiras e nações": {"eixo": "social", "valor": -2},
-            "Multiculturalismo radical e fronteiras abertas": {"eixo": "social", "valor": -1},
-            "Políticas equilibradas de imigração com integração": {"eixo": "social", "valor": 0},
-            "Preservação cultural e controle de imigração": {"eixo": "social", "valor": 1},
-            "Nacionalismo forte e restrição total da imigração": {"eixo": "social", "valor": 2}
-        }
-    },
-    {
-        "id": 7,
-        "question": "Qual é sua posição sobre serviços públicos?",
-        "options": {
-            "Todos os serviços devem ser públicos e gratuitos": {"eixo": "economia", "valor": -2},
-            "Estado de bem-estar social amplo com serviços públicos majoritários": {"eixo": "economia", "valor": -1},
-            "Mistura de serviços públicos e privados": {"eixo": "economia", "valor": 0},
-            "Serviços privados com algum apoio estatal": {"eixo": "economia", "valor": 1},
-            "Privatização total de todos os serviços": {"eixo": "economia", "valor": 2}
-        }
-    },
-    {
-        "id": 8,
-        "question": "Como você vê a relação entre religião e Estado?",
-        "options": {
-            "Religião deve ser completamente abolida": {"eixo": "social", "valor": -2},
-            "Estado laico radical com separação completa": {"eixo": "social", "valor": -1},
-            "Estado laico com respeito às tradições religiosas": {"eixo": "social", "valor": 0},
-            "Estado com influência de valores religiosos tradicionais": {"eixo": "social", "valor": 1},
-            "Estado baseado em princípios religiosos": {"eixo": "social", "valor": 2}
-        }
-    }
-]
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center font-sans p-4">
 
-IDEOLOGY_POINTS = {
-    "Comunista": (-2.0, -1.0),
-    "Socialista": (-1.5, -0.5),
-    "Social Democrata": (-0.5, 0.0),
-    "Anarco-Comunista": (-2.0, -2.0),
-    "Centrista": (0.0, 0.0),
-    "Social Liberal": (0.5, 0.0),
-    "Liberal": (1.5, -0.5),
-    "Conservador": (1.0, 1.5),
-    "Anarcocapitalista": (2.0, -2.0),
-    "Fascista/Nacionalista": (1.5, 2.0)
-}
-
-# --- Funções de Lógica de Negócio (Mantido Coerente) ---
-
-def calculate_results(answers):
-    """Calcula os resultados baseado nas respostas com normalização correta."""
-    economy_score = 0
-    social_score = 0
-    MAX_SCORE_PER_AXIS = 8.0 
-
-    for answer in answers.values():
-        if answer["eixo"] == "economia":
-            economy_score += answer["valor"]
-        else:
-            social_score += answer["valor"]
-    
-    # Normalização dos scores para a escala -2.0 a +2.0
-    economy_normalized = (economy_score / MAX_SCORE_PER_AXIS) * 2.0
-    social_normalized = (social_score / MAX_SCORE_PER_AXIS) * 2.0
-
-    return economy_normalized, social_normalized
-
-def determine_ideology(economy, social):
-    """Determina a ideologia usando Distância Euclidiana (mais precisa)."""
-    best_match = "Centrista"
-    min_distance = float('inf')
-
-    user_point = (economy, social)
-
-    for ideology, point in IDEOLOGY_POINTS.items():
-        ideology_point = point
+    <!-- Container Principal do Aplicativo -->
+    <div id="app-container" class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 md:p-10 transition-all duration-300">
         
-        distance = math.sqrt(
-            (user_point[0] - ideology_point[0])**2 + 
-            (user_point[1] - ideology_point[1])**2
-        )
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-primary-dark tracking-tight">
+                Visualizador de Códigos de Barras
+            </h1>
+            <p class="text-gray-500 mt-2 text-lg" id="subtitle">Selecione um item abaixo:</p>
+        </header>
 
-        if distance < min_distance:
-            min_distance = distance
-            best_match = ideology
+        <!-- Conteúdo principal será renderizado aqui -->
+        <main id="content-area">
+            <!-- Conteúdo dinâmico será injetado pelo JavaScript -->
+        </main>
+    </div>
 
-    return best_match
+    <script>
+        // Lista de 12 itens atualizada com os dados do PDF fornecido
+        const items = [
+            { name: "Desativar conferência de peso", id: "1012047530002547" },
+            { name: "Executa função", id: "1012049890002547" },
+            { name: "Desconto no item anterior", id: "1012047730002547" },
+            { name: "Alterar digital", id: "1012049920002547" },
+            { name: "Pagamento outros", id: "1012047740002547" },
+            { name: "Fechar caixa", id: "1012050020002547" },
+            { name: "Abrir multiplicação", id: "1012047850002547" },
+            { name: "Relatório gerencial por usuário", id: "1012050230002547" },
+            { name: "Reimprimir últimos comprovantes", id: "1012047880002547" },
+            { name: "Desligar PDV", id: "1012050400002547" },
+            { name: "Tarar balança de conferência", id: "1012048930002547" },
+            { name: "Reiniciar PDV", id: "1012050410002547" }
+        ];
 
-def determine_spectrum(economy_score):
-    """Determina o espectro político (esquerda, centro, direita)"""
-    if economy_score < -0.5:
-        return "Esquerda"
-    elif economy_score > 0.5:
-        return "Direita"
-    else:
-        return "Centro"
+        const contentArea = document.getElementById('content-area');
+        const subtitle = document.getElementById('subtitle');
+        const defaultSubtitle = "Selecione um item abaixo:";
 
-def plot_results(economy, social, ideology):
-    """Cria gráfico dos resultados"""
-    fig, ax = plt.subplots(figsize=(10, 8))
-
-    ax.set_xlim(-2.2, 2.2)
-    ax.set_ylim(-2.2, 2.2)
-
-    # Cores dos Quadrantes
-    ax.fill_between([-2.2, 0], 0, 2.2, alpha=0.15, color='red')
-    ax.fill_between([-2.2, 0], -2.2, 0, alpha=0.15, color='orange')
-    ax.fill_between([0, 2.2], 0, 2.2, alpha=0.15, color='purple')
-    ax.fill_between([0, 2.2], -2.2, 0, alpha=0.15, color='green')
-
-    # Plotar pontos de referência das ideologias
-    for name, point in IDEOLOGY_POINTS.items():
-        ax.scatter(point[0], point[1], marker='x', color='gray', s=50, alpha=0.7)
-        if name in ["Centrista", "Comunista", "Fascista/Nacionalista", "Anarcocapitalista"]:
-            ax.annotate(name, (point[0], point[1]), 
-                        xytext=(5, 5), textcoords='offset points', 
-                        fontsize=8, color='gray')
-
-    # Linhas centrais
-    ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
-    ax.axvline(x=0, color='black', linestyle='-', alpha=0.5)
-
-    # Ponto do usuário
-    ax.scatter(economy, social, color='gold', s=250, edgecolors='black', linewidth=1.5, zorder=5)
-    ax.annotate(f'Você: {ideology}', (economy, social), 
-                xytext=(10, 10), textcoords='offset points', 
-                bbox=dict(boxstyle='round,pad=0.4', facecolor='yellow', alpha=0.9, edgecolor='black'),
-                fontsize=10)
-
-    ax.set_xlabel('Eixo Econômico\n← Coletivista/Esquerda (-2.0) - Individualista/Direita (+2.0) →', fontsize=12)
-    ax.set_ylabel('Eixo Social\n← Libertário (-2.0) - Autoritário (+2.0) →', fontsize=12)
-    ax.set_title('Seu Posicionamento Político no Espectro', fontsize=14, fontweight='bold')
-    ax.grid(True, linestyle='--', alpha=0.4)
-
-    return fig
-
-# --- Aplicação Streamlit Principal ---
-
-def main():
-    st.markdown('<h1 class="main-header">🏛️ Quiz Político</h1>', unsafe_allow_html=True)
-    st.markdown("### Descubra seu espectro político e inclinação ideológica")
-
-    if 'answers' not in st.session_state:
-        st.session_state.answers = {}
-    if 'current_question' not in st.session_state:
-        st.session_state.current_question = 0
-    if 'quiz_complete' not in st.session_state:
-        st.session_state.quiz_complete = False
-        
-    if 'shuffled_questions' not in st.session_state:
-        st.session_state.shuffled_questions = QUESTIONS_LIST.copy()
-        random.shuffle(st.session_state.shuffled_questions)
-
-    questions = st.session_state.shuffled_questions
-    total_questions = len(questions)
-
-    progress_value = (st.session_state.current_question) / total_questions
-    st.progress(progress_value)
-    st.write(f"Pergunta {st.session_state.current_question + 1} de {total_questions}")
-
-    if not st.session_state.quiz_complete:
-        current_q = questions[st.session_state.current_question]
-
-        st.subheader(f"Pergunta {st.session_state.current_question + 1}: {current_q['question']}")
-
-        option_keys = list(current_q['options'].keys())
-        random.shuffle(option_keys)
-        
-        radio_key = f"question_{current_q['id']}_{st.session_state.current_question}"
-
-        default_option = None
-        if current_q['id'] in st.session_state.answers:
-            for key, value in current_q['options'].items():
-                if value == st.session_state.answers[current_q['id']]:
-                    default_option = key
-                    break
-
-        selected_option = st.radio(
-            "Selecione sua resposta:",
-            options=option_keys,
-            index=option_keys.index(default_option) if default_option else 0,
-            key=radio_key
-        )
-
-        col1, col2 = st.columns([1, 1])
-
-        with col1:
-            if st.session_state.current_question > 0:
-                if st.button("← Voltar"):
-                    st.session_state.answers[current_q['id']] = current_q['options'][selected_option]
-                    st.session_state.current_question -= 1
-                    st.rerun()
-
-        with col2:
-            if st.button("Próxima →" if st.session_state.current_question < total_questions - 1 else "Finalizar Quiz"):
-                st.session_state.answers[current_q['id']] = current_q['options'][selected_option]
-
-                if st.session_state.current_question < total_questions - 1:
-                    st.session_state.current_question += 1
-                else:
-                    st.session_state.quiz_complete = True
-                st.rerun()
-
-    else:
-        # --- Mostrar Resultados ---
-        st.balloons()
-        st.success("🎉 Quiz Concluído! Aqui estão seus resultados:")
-
-        economy_score, social_score = calculate_results(st.session_state.answers)
-        ideology = determine_ideology(economy_score, social_score)
-        spectrum = determine_spectrum(economy_score)
-
-        spectrum_class = ""
-        if spectrum == "Esquerda":
-            spectrum_class = "left-wing"
-        elif spectrum == "Centro":
-            spectrum_class = "center-wing"
-        else:
-            spectrum_class = "right-wing"
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown(f"""
-            <div class="result-card {spectrum_class}">
-                <h2>📊 Seu Resultado</h2>
-                <h3>Espectro: <strong>{spectrum}</strong></h3>
-                <h3>Inclinação: <strong>{ideology}</strong></h3>
-                <p><strong>Eixo Econômico (X):</strong> {economy_score:.2f} (← Coletivista | Individualista →)</p>
-                <p><strong>Eixo Social (Y):</strong> {social_score:.2f} (← Libertário | Autoritário →)</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col2:
-            fig = plot_results(economy_score, social_score, ideology)
-            st.pyplot(fig)
-
-        # Descrição detalhada
-        st.subheader("📖 Explicação do Resultado")
-
-        ideology_descriptions = {
-            "Comunista": "Busca uma sociedade sem classes e a abolição da propriedade privada e do Estado, com forte controle coletivo da economia.",
-            "Socialista": "Defende a socialização dos meios de produção e uma economia planificada com forte Estado de bem-estar social e progressismo social.",
-            "Social Democrata": "Combina democracia política com economia mista, Estado de bem-estar social e uma abordagem equilibrada de políticas sociais.",
-            "Anarco-Comunista": "Oposição a todas as formas de governo e defesa de uma sociedade sem classes, sem Estado e com autogestão dos meios de produção.",
-            "Centrista": "Posição moderada que busca equilíbrio entre diferentes correntes, priorizando o pragmatismo e o consenso.",
-            "Social Liberal": "Defende liberdades individuais e de mercado, mas com intervenção estatal para garantir justiça social e direitos civis amplos.",
-            "Liberal": "Ênfase na liberdade individual, economia de mercado (livre mercado) e Estado mínimo (Mínimo Socialmente Necessário).",
-            "Conservador": "Valoriza a tradição, ordem social hierárquica e manutenção das instituições, geralmente com foco na livre iniciativa econômica.",
-            "Anarcocapitalista": "Defende a abolição do Estado e o controle total da sociedade pelo mercado e contratos privados, incluindo serviços de segurança.",
-            "Fascista/Nacionalista": "Defende um Estado totalitário, nacionalismo extremo, corporativismo econômico e forte repressão à oposição e à diferença."
+        /**
+         * Gera a URL de uma imagem placeholder para simular um código de barras.
+         * O Placehold.co simula a imagem com o texto do ID fornecido.
+         * * @param {string} barcodeId O ID do código de barras a ser exibido.
+         * @returns {string} A URL da imagem.
+         */
+        function generateBarcodeUrl(barcodeId) {
+            // Aumentamos a largura para acomodar o número longo.
+            // URL: 600x200, fundo preto, texto branco.
+            return `https://placehold.co/600x200/000000/FFFFFF?text=${encodeURIComponent(barcodeId)}`;
         }
 
-        st.write(f"Sua **Inclinação Principal** é: **{ideology}**")
-        st.write(f"**{ideology}**: {ideology_descriptions.get(ideology, 'Descrição não disponível.')}")
+        /**
+         * Renderiza a página de menu inicial com os 12 botões.
+         */
+        function renderMenu() {
+            subtitle.textContent = defaultSubtitle;
+            contentArea.innerHTML = ''; // Limpa o conteúdo anterior
 
-        if st.button("🔄 Refazer Quiz"):
-            st.session_state.answers = {}
-            st.session_state.current_question = 0
-            st.session_state.quiz_complete = False
-            del st.session_state.shuffled_questions 
-            st.rerun()
+            // Cria um grid responsivo para os botões
+            const grid = document.createElement('div');
+            // Ajustamos o layout para 2 colunas em telas pequenas e 3 em telas maiores, pois os nomes são mais longos
+            grid.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'; 
+
+            items.forEach((item, index) => {
+                const button = document.createElement('button');
+                button.textContent = `${index + 1}. ${item.name}`;
+                button.className = 'p-4 bg-primary text-white rounded-lg shadow-md hover:bg-primary-dark transition duration-150 ease-in-out font-semibold text-sm md:text-base transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-primary/50 text-left';
+                
+                // Adiciona o evento de clique para ir para a página de detalhe
+                button.addEventListener('click', () => renderDetail(item));
+
+                grid.appendChild(button);
+            });
+
+            contentArea.appendChild(grid);
+        }
+
+        /**
+         * Renderiza a página de detalhe com a imagem do código de barras.
+         * @param {object} item O objeto do item (name e id).
+         */
+        function renderDetail(item) {
+            subtitle.textContent = `Visualizando: ${item.name}`;
+            contentArea.innerHTML = ''; // Limpa o conteúdo anterior
+
+            const barcodeUrl = generateBarcodeUrl(item.id);
+
+            // Container para centralizar o conteúdo vertical e horizontalmente
+            const detailContainer = document.createElement('div');
+            detailContainer.className = 'flex flex-col items-center justify-center space-y-8 py-8 animate-fadeIn';
+            detailContainer.style.animation = 'fadeIn 0.5s ease-out'; // Define a animação
+
+            // Descrição do Item
+            const itemDescription = document.createElement('h2');
+            itemDescription.className = 'text-2xl font-bold text-gray-700 text-center';
+            itemDescription.textContent = item.name;
+
+            // Título do Código de Barras
+            const codeTitle = document.createElement('h3');
+            codeTitle.className = 'text-xl font-mono text-gray-600';
+            codeTitle.textContent = `Código: ${item.id}`;
+
+            // Imagem do Código de Barras (Este é o elemento <img> que você queria)
+            const barcodeImage = document.createElement('img');
+            barcodeImage.src = barcodeUrl;
+            barcodeImage.alt = `Código de Barras para ${item.name}`;
+            // Classe 'barcode-img' aplica a estilização personalizada
+            barcodeImage.className = 'barcode-img w-full max-w-md h-auto rounded-md'; 
+
+            // Botão Voltar
+            const backButton = document.createElement('button');
+            backButton.textContent = '← Voltar ao Menu Principal';
+            backButton.className = 'p-3 px-6 bg-secondary text-white rounded-lg shadow-lg hover:bg-orange-600 transition duration-150 ease-in-out font-bold focus:outline-none focus:ring-4 focus:ring-secondary/50';
+            backButton.addEventListener('click', renderMenu);
+
+            detailContainer.append(itemDescription, codeTitle, barcodeImage, backButton);
+            contentArea.appendChild(detailContainer);
+        }
+
+        // Estilo CSS para a animação (adicionado via JS para manter o arquivo único)
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fadeIn {
+                animation: fadeIn 0.5s ease-out;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Inicia a aplicação na tela de menu
+        window.onload = renderMenu;
+
+    </script>
+</body>
+</html>
+""")
 
 if __name__ == "__main__":
     main()
