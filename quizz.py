@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # Estilo CSS personalizado
-st.markdown(""" 
+st.html(""" 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
